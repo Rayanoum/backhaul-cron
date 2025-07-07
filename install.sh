@@ -34,19 +34,26 @@ show_menu() {
 update_script() {
     echo -e "${YELLOW}=== Update Script ===${NC}"
     echo -e "${BLUE}Checking for updates...${NC}"
+    
+    # Get the actual script path
+    SCRIPT_PATH=$(realpath "$0")
+    
     # Download the latest version
     temp_file=$(mktemp)
     if curl -s "$GITHUB_REPO" -o "$temp_file"; then
-        # Compare versions
-        latest_version=$(grep -m 1 "SCRIPT_VERSION=" "$temp_file" | cut -d'"' -f2)
+        # Extract version more reliably
+        latest_version=$(awk -F'"' '/SCRIPT_VERSION=/ {print $2; exit}' "$temp_file")
+        
         if [ "$latest_version" != "$SCRIPT_VERSION" ]; then
             echo -e "${GREEN}New version available: ${latest_version}${NC}"
             echo -e "Current version: ${SCRIPT_VERSION}"
+            
             # Backup current script
-            cp "$0" "$0.bak"
+            cp "$SCRIPT_PATH" "$SCRIPT_PATH.bak"
+            
             # Install new version
-            if mv "$temp_file" "$0"; then
-                chmod +x "$0"
+            if mv "$temp_file" "$SCRIPT_PATH"; then
+                chmod +x "$SCRIPT_PATH"
                 echo -e "${GREEN}Script updated successfully to version ${latest_version}!${NC}"
                 echo -e "${YELLOW}Please run the script again to use the new version.${NC}"
                 exit 0
