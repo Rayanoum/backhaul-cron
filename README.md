@@ -11,7 +11,7 @@
 
 ## نصب و استفاده
 
-برای اجرای مستقیم اسکریپت از دستور زیر استفاده کنید:
+برای اجرای مستقیم اسکریپت از دستور زیر استفاده کنید :
 
 ```bash
 bash <(curl -s https://raw.githubusercontent.com/Rayanoum/backhaul-cron/main/install.sh)
