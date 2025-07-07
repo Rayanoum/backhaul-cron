@@ -23,7 +23,7 @@ show_header() {
     echo -e "   ${CYAN}Version: ${SCRIPT_VERSION}${NC}"
     echo -e "   ${BLUE}t.me/dev_spaceX${NC}"
     echo -e "   ${BLUE}github.com/Rayanoum/backhaul-cron${NC}"
-    echo -e "${YELLOW}───────────────────────────────────────────${NC}"
+    echo -e "${YELLOW}──────────────────────────────────────────────────${NC}"
 }
 
 # Function to display the main menu
@@ -33,7 +33,7 @@ show_menu() {
     echo -e "   ${GREEN}2. Remove automatic restart schedule${NC}"
     echo -e "   ${GREEN}3. Restart services now${NC}"
     echo -e "   ${RED}4. Exit${NC}"
-    echo -e "${YELLOW}───────────────────────────────────────────${NC}"
+    echo -e "${YELLOW}──────────────────────────────────────────────────${NC}"
     echo -n "   Please enter your choice [1-4]: "
 }
 
