@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script version - DO NOT EDIT THIS LINE MANUALLY
-SCRIPT_VERSION="1.3.0"
+SCRIPT_VERSION="1.4.0"
 
 # GitHub repository URL
 GITHUB_REPO="https://raw.githubusercontent.com/Rayanoum/backhaul-cron/main/install.sh"
