@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script version - DO NOT EDIT THIS LINE MANUALLY
-SCRIPT_VERSION="1.4.0"
+SCRIPT_VERSION="1.0.0"
 
 # GitHub repository URL
 GITHUB_REPO="https://raw.githubusercontent.com/Rayanoum/backhaul-cron/main/install.sh"
@@ -75,9 +75,8 @@ show_menu() {
     echo -e "1. Add automatic restart schedule"
     echo -e "2. Remove automatic restart schedule"
     echo -e "3. Restart services now"
-    echo -e "4. Test script (dry run)"
-    echo -e "5. Exit"
-    echo -n "Please enter your choice [1-5]: "
+    echo -e "4. Exit"
+    echo -n "Please enter your choice [1-4]: "
 }
 
 # Function to check if services exist
@@ -148,16 +147,6 @@ restart_now() {
     fi
 }
 
-# Function to test the script
-test_script() {
-    echo -e "${YELLOW}=== Test Script (Dry Run) ===${NC}"
-    if check_services; then
-        echo -e "${YELLOW}The following command would be executed:${NC}"
-        echo "systemctl restart $services"
-        echo -e "${GREEN}Test completed successfully (no changes were made).${NC}"
-    fi
-}
-
 # Main execution
 check_and_update
 
@@ -168,8 +157,7 @@ while true; do
         1) add_cron ;;
         2) remove_cron ;;
         3) restart_now ;;
-        4) test_script ;;
-        5) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
+        4) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
         *) echo -e "${RED}Invalid option. Please try again.${NC}" ;;
     esac
     echo -e "\nPress any key to continue..."
