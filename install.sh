@@ -1,5 +1,8 @@
 #!/bin/bash
 
+# Script version
+SCRIPT_VERSION="1.1.3"
+
 # GitHub repository URL
 GITHUB_REPO="https://raw.githubusercontent.com/Rayanoum/backhaul-cron/main/install.sh"
 
@@ -10,18 +13,58 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to download and run the latest version
-run_latest_version() {
-    echo -e "${YELLOW}Downloading the latest version...${NC}"
+# Function to auto-update the script
+auto_update() {
+    # Get the actual script path
+    SCRIPT_PATH=$(realpath "$0")
     
-    temp_script=$(mktemp)
-    if curl -s "$GITHUB_REPO" -o "$temp_script"; then
-        chmod +x "$temp_script"
-        exec "$temp_script"
+    # Download the latest version
+    temp_file=$(mktemp)
+    if curl -s "$GITHUB_REPO" -o "$temp_file"; then
+        # Extract version
+        latest_version=$(awk -F'"' '/SCRIPT_VERSION=/ {print $2; exit}' "$temp_file")
+        
+        if [ "$latest_version" != "$SCRIPT_VERSION" ]; then
+            echo -e "${GREEN}New version found: ${latest_version} (current: ${SCRIPT_VERSION})${NC}"
+            echo -e "${BLUE}Auto-updating script...${NC}"
+            
+            # Backup current script
+            cp "$SCRIPT_PATH" "$SCRIPT_PATH.bak"
+            
+            # Install new version
+            if mv "$temp_file" "$SCRIPT_PATH"; then
+                chmod +x "$SCRIPT_PATH"
+                echo -e "${GREEN}Script updated successfully!${NC}"
+                echo -e "${YELLOW}Restarting with new version...${NC}"
+                exec "$SCRIPT_PATH"
+                exit 0
+            else
+                echo -e "${RED}Failed to update the script.${NC}"
+                return 1
+            fi
+        fi
     else
-        echo -e "${RED}Failed to download the latest version.${NC}"
-        exit 1
+        echo -e "${RED}Failed to check for updates.${NC}"
     fi
+    [ -f "$temp_file" ] && rm "$temp_file"
+}
+
+# Auto-update check (silent mode - only shows errors)
+auto_update_silent() {
+    SCRIPT_PATH=$(realpath "$0")
+    temp_file=$(mktemp)
+    if curl -s "$GITHUB_REPO" -o "$temp_file"; then
+        latest_version=$(awk -F'"' '/SCRIPT_VERSION=/ {print $2; exit}' "$temp_file")
+        if [ "$latest_version" != "$SCRIPT_VERSION" ]; then
+            cp "$SCRIPT_PATH" "$SCRIPT_PATH.bak"
+            if mv "$temp_file" "$SCRIPT_PATH"; then
+                chmod +x "$SCRIPT_PATH"
+                exec "$SCRIPT_PATH"
+                exit 0
+            fi
+        fi
+    fi
+    [ -f "$temp_file" ] && rm "$temp_file"
 }
 
 # Function to display the main menu
@@ -29,7 +72,7 @@ show_menu() {
     clear
     echo " "
     echo -e "${YELLOW}-------- Auto Restart Service Management --------${NC}"
-    echo -e "${GREEN}t.me/Rayanoum${NC}"
+    echo -e "${BLUE}Version: ${SCRIPT_VERSION}${NC}"
     echo -e "${BLUE}https://github.com/Rayanoum/backhaul-cron${NC}"
     echo -e "${YELLOW}-------------------------------------------------${NC}"
     echo -e "1. Add automatic restart schedule"
@@ -55,29 +98,30 @@ check_services() {
 # Function to add cron job
 add_cron() {
     echo -e "${YELLOW}=== Add Automatic Restart Schedule ===${NC}"
-    
+    # Check if services exist
     if ! check_services; then
         return
     fi
-    
+    # Get interval from user
     while true; do
         echo -n "Enter restart interval in minutes (e.g., 10, 30, 60): "
         read interval
-        
         if [[ "$interval" =~ ^[0-9]+$ ]] && [ "$interval" -gt 0 ]; then
             break
         else
             echo -e "${RED}Invalid input. Please enter a positive number.${NC}"
         fi
     done
-    
+    # Create temp cron file
     temp_cron=$(mktemp)
     crontab -l > "$temp_cron" 2>/dev/null
+    # Remove existing entry if any
     sed -i '/backhaul-cron/d' "$temp_cron"
+    # Add new entry
     echo "*/$interval * * * * /bin/bash -c 'services=\$(systemctl list-unit-files | grep \"backhaul-\" | awk '\''{print \$1}'\''); [ -n \"\$services\" ] && systemctl restart \$services' # backhaul-cron" >> "$temp_cron"
+    # Install new cron file
     crontab "$temp_cron"
     rm "$temp_cron"
-    
     echo -e "${GREEN}Automatic restart every $interval minutes has been scheduled.${NC}"
     echo -e "${YELLOW}Current crontab:${NC}"
     crontab -l
@@ -86,18 +130,18 @@ add_cron() {
 # Function to remove cron job
 remove_cron() {
     echo -e "${YELLOW}=== Remove Automatic Restart Schedule ===${NC}"
-    
+    # Create temp cron file
     temp_cron=$(mktemp)
     crontab -l > "$temp_cron" 2>/dev/null
-    
+    # Check if entry exists
     if grep -q "backhaul-cron" "$temp_cron"; then
+        # Remove entry
         sed -i '/backhaul-cron/d' "$temp_cron"
         crontab "$temp_cron"
         echo -e "${GREEN}Automatic restart schedule has been removed.${NC}"
     else
         echo -e "${YELLOW}No automatic restart schedule was found.${NC}"
     fi
-    
     rm "$temp_cron"
     echo -e "${YELLOW}Current crontab:${NC}"
     crontab -l
@@ -106,7 +150,6 @@ remove_cron() {
 # Function to restart services now
 restart_now() {
     echo -e "${YELLOW}=== Restart Services Now ===${NC}"
-    
     if check_services; then
         echo -e "${YELLOW}Restarting services...${NC}"
         systemctl restart $services
@@ -117,7 +160,6 @@ restart_now() {
 # Function to test the script
 test_script() {
     echo -e "${YELLOW}=== Test Script (Dry Run) ===${NC}"
-    
     if check_services; then
         echo -e "${YELLOW}The following command would be executed:${NC}"
         echo "systemctl restart $services"
@@ -125,26 +167,21 @@ test_script() {
     fi
 }
 
-# Main execution
-if [ "$0" = "bash" ]; then
-    # When running via bash <(curl ...)
-    run_latest_version
-else
-    # When running directly
-    while true; do
-        show_menu
-        read choice
-        
-        case $choice in
-            1) add_cron ;;
-            2) remove_cron ;;
-            3) restart_now ;;
-            4) test_script ;;
-            5) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
-            *) echo -e "${RED}Invalid option. Please try again.${NC}" ;;
-        esac
-        
-        echo -e "\nPress any key to continue..."
-        read -n 1 -s
-    done
-fi
+# First silent auto-update check
+auto_update_silent
+
+# Main script execution
+while true; do
+    show_menu
+    read choice
+    case $choice in
+        1) add_cron ;;
+        2) remove_cron ;;
+        3) restart_now ;;
+        4) test_script ;;
+        5) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
+        *) echo -e "${RED}Invalid option. Please try again.${NC}" ;;
+    esac
+    echo -e "\nPress any key to continue..."
+    read -n 1 -s
+done
