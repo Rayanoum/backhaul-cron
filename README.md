@@ -17,4 +17,4 @@
 برای اجرای مستقیم اسکریپت از دستور زیر استفاده کنید:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/YourUsername/backhaul-cron/main/install.sh)
+bash <(curl -s https://raw.githubusercontent.com/Rayanoum/backhaul-cron/main/install.sh)
