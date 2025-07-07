@@ -16,12 +16,11 @@ NC='\033[0m' # No Color
 # Function to display the main menu
 show_menu() {
     clear
-        echo "---------------------- Abuse Defender ----------------------"
-    echo "         https://github.com/Rayanoum/backhaul-cron"
-    echo "------------------------------------------------------------"
     echo " "
-    echo -e "${YELLOW}=== Auto Restart Service Management ===${NC}"
+    echo -e "${YELLOW}-------- Auto Restart Service Management --------${NC}"
+    echo "         https://github.com/Rayanoum/backhaul-cron"
     echo -e "${BLUE}Version: ${SCRIPT_VERSION}${NC}"
+    echo "-------------------------------------------------------------"
     echo -e "1. Add automatic restart schedule"
     echo -e "2. Remove automatic restart schedule"
     echo -e "3. Restart services now"
