@@ -29,7 +29,7 @@ show_menu() {
     clear
     echo " "
     echo -e "${YELLOW}-------- Auto Restart Service Management --------${NC}"
-    echo -e "${BLUE}Version: Latest (auto-updated)${NC}"
+    echo -e "${GREEN}t.me/Rayanoum${NC}"
     echo -e "${BLUE}https://github.com/Rayanoum/backhaul-cron${NC}"
     echo -e "${YELLOW}-------------------------------------------------${NC}"
     echo -e "1. Add automatic restart schedule"
