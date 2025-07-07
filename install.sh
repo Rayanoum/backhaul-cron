@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script version
-SCRIPT_VERSION="1.0.1"
+SCRIPT_VERSION="1.0.2"
 
 # Colors for output
 RED='\033[0;31m'
