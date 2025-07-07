@@ -57,13 +57,13 @@ add_cron() {
         return
     fi
     while true; do
-        echo -ne "\n ${GREEN}Enter restart interval in minutes (e.g., 10, 30, 60): ${NC}"
-        read interval
-        if [[ "$interval" =~ ^[0-9]+$ ]] && [ "$interval" -gt 0 ]; then
-            break
-        else
-            echo -e " ${RED}Invalid input. Please enter a positive number.${NC}"
-        fi
+    echo -ne "\n ${GREEN}Enter restart interval in minutes (1-59): ${NC}"
+    read interval
+    if [[ "$interval" =~ ^[0-9]+$ ]] && [ "$interval" -ge 1 ] && [ "$interval" -le 59 ]; then
+        break
+    else
+        echo -e "${RED}Invalid input. Please enter a number between 1 and 59.${NC}"
+    fi
     done
     temp_cron=$(mktemp)
     crontab -l > "$temp_cron" 2>/dev/null
