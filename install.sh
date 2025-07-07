@@ -90,8 +90,8 @@ remove_cron() {
         echo -e "\n ${RED}No automatic restart schedule was found.${NC}"
     fi
     rm "$temp_cron"
-    echo -e "\n ${RED}Current crontab:${NC}"
-    crontab -l
+    #echo -e "\n ${RED}Current crontab:${NC}"
+    #crontab -l
 }
 
 # Function to restart services now
