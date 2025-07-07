@@ -1,10 +1,10 @@
 #!/bin/bash
 
-# Current installed version
-INSTALLED_VERSION="2.0.0"
+# Script version - DO NOT EDIT THIS LINE MANUALLY
+SCRIPT_VERSION="1.3.0"
 
 # GitHub repository URL
-GITHUB_SCRIPT_URL="https://raw.githubusercontent.com/Rayanoum/backhaul-cron/main/install.sh"
+GITHUB_REPO="https://raw.githubusercontent.com/Rayanoum/backhaul-cron/main/install.sh"
 
 # Colors for output
 RED='\033[0;31m'
@@ -13,49 +13,54 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Function to check and update script
+# Function to check and update the script
 check_and_update() {
     echo -e "${YELLOW}Checking for updates...${NC}"
     
-    # Download the script temporarily
-    TEMP_SCRIPT=$(mktemp)
-    if ! curl -s "$GITHUB_SCRIPT_URL" -o "$TEMP_SCRIPT"; then
+    # Download the latest version to compare
+    temp_file=$(mktemp)
+    if ! curl -s "$GITHUB_REPO" -o "$temp_file"; then
         echo -e "${RED}Failed to check for updates. Continuing with current version.${NC}"
-        rm -f "$TEMP_SCRIPT"
+        rm -f "$temp_file"
         return 1
     fi
 
-    # Extract version from GitHub script
-    ONLINE_VERSION=$(grep -m1 'INSTALLED_VERSION=' "$TEMP_SCRIPT" | cut -d'"' -f2)
+    # Extract version from downloaded file
+    latest_version=$(grep -m1 'SCRIPT_VERSION=".*"' "$temp_file" | cut -d'"' -f2)
     
-    if [ -z "$ONLINE_VERSION" ]; then
-        echo -e "${YELLOW}Could not determine online version. Continuing with current version.${NC}"
-        rm -f "$TEMP_SCRIPT"
+    if [ -z "$latest_version" ]; then
+        echo -e "${RED}Could not determine latest version. Continuing with current version.${NC}"
+        rm -f "$temp_file"
         return 1
     fi
 
-    if [ "$INSTALLED_VERSION" != "$ONLINE_VERSION" ]; then
-        echo -e "${GREEN}New version available ($ONLINE_VERSION), updating...${NC}"
+    if [ "$latest_version" != "$SCRIPT_VERSION" ]; then
+        echo -e "${GREEN}New version available: ${latest_version}${NC}"
+        echo -e "Current version: ${SCRIPT_VERSION}"
         
-        # Get script path
+        # Get the actual script path
         SCRIPT_PATH=$(realpath "$0")
         
         # Create backup
-        cp "$SCRIPT_PATH" "${SCRIPT_PATH}.bak"
+        backup_file="$SCRIPT_PATH.bak"
+        cp "$SCRIPT_PATH" "$backup_file"
+        echo -e "${YELLOW}Backup created at: $backup_file${NC}"
         
         # Replace with new version
-        if mv "$TEMP_SCRIPT" "$SCRIPT_PATH" && chmod +x "$SCRIPT_PATH"; then
-            echo -e "${GREEN}Successfully updated to version $ONLINE_VERSION${NC}"
-            echo -e "${YELLOW}Restarting script...${NC}"
+        if mv "$temp_file" "$SCRIPT_PATH" && chmod +x "$SCRIPT_PATH"; then
+            echo -e "${GREEN}Successfully updated to version ${latest_version}${NC}"
+            echo -e "${YELLOW}Restarting script with new version...${NC}"
             exec "$SCRIPT_PATH"
             exit 0
         else
-            echo -e "${RED}Update failed! Continuing with current version.${NC}"
+            echo -e "${RED}Update failed! Restoring backup...${NC}"
+            mv "$backup_file" "$SCRIPT_PATH"
+            chmod +x "$SCRIPT_PATH"
             return 1
         fi
     else
-        echo -e "${GREEN}You have the latest version ($INSTALLED_VERSION).${NC}"
-        rm -f "$TEMP_SCRIPT"
+        echo -e "${GREEN}You have the latest version (${SCRIPT_VERSION}).${NC}"
+        rm -f "$temp_file"
     fi
 }
 
@@ -64,8 +69,7 @@ show_menu() {
     clear
     echo " "
     echo -e "${YELLOW}-------- Auto Restart Service Management --------${NC}"
-    echo -e "${BLUE}Version: ${INSTALLED_VERSION}${NC}"
-    echo -e "${GREEN}t.me/Rayanoum${NC}"
+    echo -e "${BLUE}Version: ${SCRIPT_VERSION}${NC}"
     echo -e "${BLUE}https://github.com/Rayanoum/backhaul-cron${NC}"
     echo -e "${YELLOW}-------------------------------------------------${NC}"
     echo -e "1. Add automatic restart schedule"
@@ -112,7 +116,6 @@ add_cron() {
     echo "*/$interval * * * * /bin/bash -c 'services=\$(systemctl list-unit-files | grep \"backhaul-\" | awk '\''{print \$1}'\''); [ -n \"\$services\" ] && systemctl restart \$services' # backhaul-cron" >> "$temp_cron"
     crontab "$temp_cron"
     rm "$temp_cron"
-    
     echo -e "${GREEN}Automatic restart every $interval minutes has been scheduled.${NC}"
     echo -e "${YELLOW}Current crontab:${NC}"
     crontab -l
@@ -123,7 +126,6 @@ remove_cron() {
     echo -e "${YELLOW}=== Remove Automatic Restart Schedule ===${NC}"
     temp_cron=$(mktemp)
     crontab -l > "$temp_cron" 2>/dev/null
-    
     if grep -q "backhaul-cron" "$temp_cron"; then
         sed -i '/backhaul-cron/d' "$temp_cron"
         crontab "$temp_cron"
@@ -131,7 +133,6 @@ remove_cron() {
     else
         echo -e "${YELLOW}No automatic restart schedule was found.${NC}"
     fi
-    
     rm "$temp_cron"
     echo -e "${YELLOW}Current crontab:${NC}"
     crontab -l
