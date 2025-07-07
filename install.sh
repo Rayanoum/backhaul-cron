@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script version
-SCRIPT_VERSION="1.1.4"
+SCRIPT_VERSION="1.2.0"
 
 # GitHub repository URL
 GITHUB_REPO="https://raw.githubusercontent.com/Rayanoum/backhaul-cron/main/install.sh"
@@ -25,46 +25,29 @@ auto_update() {
         latest_version=$(awk -F'"' '/SCRIPT_VERSION=/ {print $2; exit}' "$temp_file")
         
         if [ "$latest_version" != "$SCRIPT_VERSION" ]; then
-            echo -e "${GREEN}New version found: ${latest_version} (current: ${SCRIPT_VERSION})${NC}"
-            echo -e "${BLUE}Auto-updating script...${NC}"
+            echo -e "${GREEN}New version found (${latest_version}), updating...${NC}"
             
             # Backup current script
             cp "$SCRIPT_PATH" "$SCRIPT_PATH.bak"
             
             # Install new version
-            if mv "$temp_file" "$SCRIPT_PATH"; then
-                chmod +x "$SCRIPT_PATH"
+            if mv "$temp_file" "$SCRIPT_PATH" && chmod +x "$SCRIPT_PATH"; then
                 echo -e "${GREEN}Script updated successfully!${NC}"
-                echo -e "${YELLOW}Restarting with new version...${NC}"
+                echo -e "${YELLOW}Restarting with the new version...${NC}"
                 exec "$SCRIPT_PATH"
                 exit 0
             else
-                echo -e "${RED}Failed to update the script.${NC}"
+                echo -e "${RED}Update failed, continuing with current version.${NC}"
                 return 1
             fi
         fi
     else
-        echo -e "${RED}Failed to check for updates.${NC}"
+        echo -e "${YELLOW}Failed to check for updates, continuing with current version.${NC}"
     fi
+    
+    # Cleanup
     [ -f "$temp_file" ] && rm "$temp_file"
-}
-
-# Auto-update check (silent mode - only shows errors)
-auto_update_silent() {
-    SCRIPT_PATH=$(realpath "$0")
-    temp_file=$(mktemp)
-    if curl -s "$GITHUB_REPO" -o "$temp_file"; then
-        latest_version=$(awk -F'"' '/SCRIPT_VERSION=/ {print $2; exit}' "$temp_file")
-        if [ "$latest_version" != "$SCRIPT_VERSION" ]; then
-            cp "$SCRIPT_PATH" "$SCRIPT_PATH.bak"
-            if mv "$temp_file" "$SCRIPT_PATH"; then
-                chmod +x "$SCRIPT_PATH"
-                exec "$SCRIPT_PATH"
-                exit 0
-            fi
-        fi
-    fi
-    [ -f "$temp_file" ] && rm "$temp_file"
+    return 0
 }
 
 # Function to display the main menu
@@ -72,7 +55,7 @@ show_menu() {
     clear
     echo " "
     echo -e "${YELLOW}-------- Auto Restart Service Management --------${NC}"
-    echo -e "${BLUE}Version2: ${SCRIPT_VERSION}${NC}"
+    echo -e "${BLUE}Version: ${SCRIPT_VERSION}${NC}"
     echo -e "${BLUE}https://github.com/Rayanoum/backhaul-cron${NC}"
     echo -e "${YELLOW}-------------------------------------------------${NC}"
     echo -e "1. Add automatic restart schedule"
@@ -167,10 +150,9 @@ test_script() {
     fi
 }
 
-# First silent auto-update check
-auto_update_silent
-
 # Main script execution
+auto_update
+
 while true; do
     show_menu
     read choice
