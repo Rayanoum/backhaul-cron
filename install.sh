@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script version
-SCRIPT_VERSION="1.2.0"
+SCRIPT_VERSION="1.1.1"
 
 # GitHub repository URL
 GITHUB_REPO="https://raw.githubusercontent.com/Rayanoum/backhaul-cron/main/install.sh"
@@ -33,22 +33,17 @@ show_menu() {
 # Function to update the script
 update_script() {
     echo -e "${YELLOW}=== Update Script ===${NC}"
-    
     echo -e "${BLUE}Checking for updates...${NC}"
-    
     # Download the latest version
     temp_file=$(mktemp)
     if curl -s "$GITHUB_REPO" -o "$temp_file"; then
         # Compare versions
         latest_version=$(grep -m 1 "SCRIPT_VERSION=" "$temp_file" | cut -d'"' -f2)
-        
         if [ "$latest_version" != "$SCRIPT_VERSION" ]; then
             echo -e "${GREEN}New version available: ${latest_version}${NC}"
             echo -e "Current version: ${SCRIPT_VERSION}"
-            
             # Backup current script
             cp "$0" "$0.bak"
-            
             # Install new version
             if mv "$temp_file" "$0"; then
                 chmod +x "$0"
@@ -85,38 +80,30 @@ check_services() {
 # Function to add cron job
 add_cron() {
     echo -e "${YELLOW}=== Add Automatic Restart Schedule ===${NC}"
-    
     # Check if services exist
     if ! check_services; then
         return
     fi
-    
     # Get interval from user
     while true; do
         echo -n "Enter restart interval in minutes (e.g., 10, 30, 60): "
         read interval
-        
         if [[ "$interval" =~ ^[0-9]+$ ]] && [ "$interval" -gt 0 ]; then
             break
         else
             echo -e "${RED}Invalid input. Please enter a positive number.${NC}"
         fi
     done
-    
     # Create temp cron file
     temp_cron=$(mktemp)
     crontab -l > "$temp_cron" 2>/dev/null
-    
     # Remove existing entry if any
     sed -i '/backhaul-cron/d' "$temp_cron"
-    
     # Add new entry
     echo "*/$interval * * * * /bin/bash -c 'services=\$(systemctl list-unit-files | grep \"backhaul-\" | awk '\''{print \$1}'\''); [ -n \"\$services\" ] && systemctl restart \$services' # backhaul-cron" >> "$temp_cron"
-    
     # Install new cron file
     crontab "$temp_cron"
     rm "$temp_cron"
-    
     echo -e "${GREEN}Automatic restart every $interval minutes has been scheduled.${NC}"
     echo -e "${YELLOW}Current crontab:${NC}"
     crontab -l
@@ -125,11 +112,9 @@ add_cron() {
 # Function to remove cron job
 remove_cron() {
     echo -e "${YELLOW}=== Remove Automatic Restart Schedule ===${NC}"
-    
     # Create temp cron file
     temp_cron=$(mktemp)
     crontab -l > "$temp_cron" 2>/dev/null
-    
     # Check if entry exists
     if grep -q "backhaul-cron" "$temp_cron"; then
         # Remove entry
@@ -139,7 +124,6 @@ remove_cron() {
     else
         echo -e "${YELLOW}No automatic restart schedule was found.${NC}"
     fi
-    
     rm "$temp_cron"
     echo -e "${YELLOW}Current crontab:${NC}"
     crontab -l
@@ -148,7 +132,6 @@ remove_cron() {
 # Function to restart services now
 restart_now() {
     echo -e "${YELLOW}=== Restart Services Now ===${NC}"
-    
     if check_services; then
         echo -e "${YELLOW}Restarting services...${NC}"
         systemctl restart $services
@@ -159,7 +142,6 @@ restart_now() {
 # Function to test the script
 test_script() {
     echo -e "${YELLOW}=== Test Script (Dry Run) ===${NC}"
-    
     if check_services; then
         echo -e "${YELLOW}The following command would be executed:${NC}"
         echo "systemctl restart $services"
@@ -171,7 +153,6 @@ test_script() {
 while true; do
     show_menu
     read choice
-    
     case $choice in
         1) add_cron ;;
         2) remove_cron ;;
@@ -181,7 +162,6 @@ while true; do
         6) echo -e "${GREEN}Exiting...${NC}"; exit 0 ;;
         *) echo -e "${RED}Invalid option. Please try again.${NC}" ;;
     esac
-    
     echo -e "\nPress any key to continue..."
     read -n 1 -s
 done
