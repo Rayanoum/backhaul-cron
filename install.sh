@@ -10,8 +10,9 @@ NC='\033[0m' # No Color
 show_menu() {
     clear
     echo "---------------------- Abuse Defender ----------------------"
-    echo "        https://github.com/Rayanoum/backhaul-cron"
+    echo "         https://github.com/Rayanoum/backhaul-cron"
     echo "------------------------------------------------------------"
+    echo " "
     echo -e "${YELLOW}=== Auto Restart Service Management ===${NC}"
     echo -e "1. Add automatic restart schedule"
     echo -e "2. Remove automatic restart schedule"
@@ -19,6 +20,7 @@ show_menu() {
     echo -e "4. Test script (dry run)"
     echo -e "5. Exit"
     echo -n "Please enter your choice [1-5]: "
+    echo " "
 }
 
 # Function to check if services exist
