@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script version
-SCRIPT_VERSION="1.1.1"
+SCRIPT_VERSION="1.1.2"
 
 # GitHub repository URL
 GITHUB_REPO="https://raw.githubusercontent.com/Rayanoum/backhaul-cron/main/install.sh"
@@ -18,9 +18,9 @@ show_menu() {
     clear
     echo " "
     echo -e "${YELLOW}-------- Auto Restart Service Management --------${NC}"
-    echo "         https://github.com/Rayanoum/backhaul-cron"
     echo -e "${BLUE}Version: ${SCRIPT_VERSION}${NC}"
-    echo "-------------------------------------------------------------"
+    echo -e "${BLUE}https://github.com/Rayanoum/backhaul-cron${NC}"
+    echo -e "${YELLOW}-------------------------------------------------${NC}"
     echo -e "1. Add automatic restart schedule"
     echo -e "2. Remove automatic restart schedule"
     echo -e "3. Restart services now"
