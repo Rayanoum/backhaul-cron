@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Current installed version
-INSTALLED_VERSION="1.3.0"
+INSTALLED_VERSION="1.3.1"
 
 # GitHub repository URL
 GITHUB_SCRIPT_URL="https://raw.githubusercontent.com/Rayanoum/backhaul-cron/main/install.sh"
