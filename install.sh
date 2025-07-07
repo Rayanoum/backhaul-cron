@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script version
-SCRIPT_VERSION="1.0.2"
+SCRIPT_VERSION="1.0.0"
 
 # Colors for output
 RED='\033[0;31m'
@@ -41,11 +41,15 @@ show_menu() {
 check_services() {
     services=$(systemctl list-unit-files | grep "backhaul-" | awk '{print $1}')
     if [ -z "$services" ]; then
-        echo -e "\n ${RED}✖ No backhaul services found!${NC}"
+        echo -e "\n${RED}✖ No backhaul services found!${NC}\n"
         return 1
     fi
-    echo -e "\n ${GREEN}✔ Found services:${NC}"
-    echo -e "       ${CYAN}$services${NC}"
+    echo -e "${GREEN}✔ Found services:${NC}"
+    # Process each service with consistent indentation
+    while IFS= read -r service; do
+        echo -e "     ${CYAN}$service${NC}"
+    done <<< "$services"
+    echo -ne "\n"  # Only one newline after services list
     return 0
 }
 
@@ -57,23 +61,22 @@ add_cron() {
         return
     fi
     while true; do
-    echo -ne "\n ${GREEN}Enter restart interval in minutes (1-59): ${NC}"
-    read interval
-    if [[ "$interval" =~ ^[0-9]+$ ]] && [ "$interval" -ge 1 ] && [ "$interval" -le 59 ]; then
-        break
-    else
-        echo -e "${RED}Invalid input. Please enter a number between 1 and 59.${NC}"
-    fi
+        echo -ne "${GREEN}Enter restart interval in minutes (1-59): ${NC}"
+        read interval
+        
+        if [[ "$interval" =~ ^[0-9]+$ ]] && [ "$interval" -ge 1 ] && [ "$interval" -le 59 ]; then
+            break
+        else
+            echo -e "${RED}Invalid input. Please enter a number between 1 and 59.${NC}"
+        fi
     done
     temp_cron=$(mktemp)
     crontab -l > "$temp_cron" 2>/dev/null
     sed -i '/backhaul-cron/d' "$temp_cron"
-    echo "*/$interval * * * * /bin/bash -c 'services=\$(systemctl list-unit-files | grep \"backhaul-\" | awk '\''{print \$1}'\''); [ -n \"\$services\" ] && systemctl restart \$services' # backhaul-cron" >> "$temp_cron"
+    echo "*/$interval * * * * /bin/bash -c 'services=\$(systemctl list-unit-files | grep \"backhaul-\" | awk '\''{print \$1}'\''); [ -n \"\$services\" ] && systemctl restart \$services'" >> "$temp_cron"
     crontab "$temp_cron"
     rm "$temp_cron"
-    echo -e "\n ${GREEN}✓ Automatic restart every $interval minutes has been scheduled.${NC}"
-    echo -e "\n ${YELLOW}Current crontab:${NC}"
-    crontab -l
+    echo -e "\n${GREEN}✓ Automatic restart every $interval minutes has been scheduled.${NC}"
 }
 
 # Function to remove cron job
@@ -90,18 +93,16 @@ remove_cron() {
         echo -e "\n ${RED}No automatic restart schedule was found.${NC}"
     fi
     rm "$temp_cron"
-    #echo -e "\n ${RED}Current crontab:${NC}"
-    #crontab -l
 }
 
 # Function to restart services now
 restart_now() {
     show_header
-    echo -e "       ${YELLOW}════════ Restart Services Now ═════════${NC}"
+    echo -e "       ${YELLOW}════════ Restart Services Now ═════════${NC}\n"
     if check_services; then
-        echo -e "\n ${YELLOW}Restarting services...${NC}"
+        echo -e "${YELLOW}Restarting services...${NC}\n"
         systemctl restart $services
-        echo -e "\n ${GREEN}✓ Services have been restarted.${NC}"
+        echo -e "${GREEN}✓ Services have been restarted.${NC}"
     fi
 }
 
@@ -114,7 +115,9 @@ while true; do
         2) remove_cron ;;
         3) restart_now ;;
         4) 
-            echo -e " ${GREEN}Exiting...${NC}"
+            echo -e "${GREEN}Exiting...${NC}"
+            sleep 1
+            clear
             exit 0 
             ;;
         *) 
@@ -124,3 +127,5 @@ while true; do
     echo -e "\n ${BLUE}Press any key to return to menu...${NC}"
     read -n 1 -s
 done
+# https://github.com/Rayanoum/backhaul-cron
+# t.me/Rayanoum
