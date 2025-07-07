@@ -1,4 +1,3 @@
-# backhaul-cron
 # اسکریپت مدیریت ریاستارت خودکار سرویس‌های backhaul
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -18,4 +17,4 @@
 برای اجرای مستقیم اسکریپت از دستور زیر استفاده کنید:
 
 ```bash
-bash <(curl -s https://raw.githubusercontent.com/YourUsername/backhaul-cron/main/auto_restart.sh)
+bash <(curl -s https://raw.githubusercontent.com/YourUsername/backhaul-cron/main/install.sh)
