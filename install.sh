@@ -45,7 +45,7 @@ check_services() {
         return 1
     fi
     echo -e "\n ${GREEN}✔ Found services:${NC}"
-    echo -e "${CYAN}$services${NC}"
+    echo -e "       ${CYAN}$services${NC}"
     return 0
 }
 
