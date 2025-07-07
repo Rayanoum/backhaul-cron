@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Script version
-SCRIPT_VERSION="1.0.0"
+SCRIPT_VERSION="1.0.2"
 
 # Colors for output
 RED='\033[0;31m'
@@ -44,7 +44,7 @@ check_services() {
         echo -e "\n${RED}✖ No backhaul services found!${NC}\n"
         return 1
     fi
-    echo -e "${GREEN}✔ Found services:${NC}"
+    echo -e "   ${GREEN}✔ Found services:${NC}"
     # Process each service with consistent indentation
     while IFS= read -r service; do
         echo -e "     ${CYAN}$service${NC}"
@@ -53,17 +53,33 @@ check_services() {
     return 0
 }
 
-# Function to add cron job
+# Function to check if cron job exists
+check_cron_exists() {
+    crontab -l 2>/dev/null | grep -q "systemctl list-unit-files | grep \"backhaul-\""
+    return $?
+}
+
+# Function to get current cron interval
+get_current_cron_interval() {
+    crontab -l 2>/dev/null | grep "systemctl list-unit-files | grep \"backhaul-\"" | sed -n 's|^\*/\([0-9]*\) \* \* \* \* .*|\1|p'
+}
+
+# Function to add/edit cron job
 add_cron() {
     show_header
-    echo -e "       ${YELLOW}════════ Add Restart Schedule ═════════${NC}"
+    echo -e "       ${YELLOW}════════ Add/Edit Restart Schedule ═════════${NC}"
+    # Check if cron job already exists
+    if check_cron_exists; then
+        current_interval=$(get_current_cron_interval)
+        echo -e " ${GREEN}✓ Existing cron job found with interval: ${current_interval} minutes${NC}"
+        echo -e " ${YELLOW}This will edit the existing schedule.${NC}\n"
+    fi
     if ! check_services; then
         return
     fi
     while true; do
-        echo -ne "${GREEN}Enter restart interval in minutes (1-59): ${NC}"
+        echo -ne " ${GREEN}Enter restart interval in minutes (1-59): ${NC}"
         read interval
-        
         if [[ "$interval" =~ ^[0-9]+$ ]] && [ "$interval" -ge 1 ] && [ "$interval" -le 59 ]; then
             break
         else
@@ -72,27 +88,33 @@ add_cron() {
     done
     temp_cron=$(mktemp)
     crontab -l > "$temp_cron" 2>/dev/null
-    sed -i '/backhaul-cron/d' "$temp_cron"
+    # Remove any existing backhaul restart cron
+    sed -i '/systemctl list-unit-files | grep "backhaul-"/d' "$temp_cron"
     echo "*/$interval * * * * /bin/bash -c 'services=\$(systemctl list-unit-files | grep \"backhaul-\" | awk '\''{print \$1}'\''); [ -n \"\$services\" ] && systemctl restart \$services'" >> "$temp_cron"
     crontab "$temp_cron"
     rm "$temp_cron"
-    echo -e "\n${GREEN}✓ Automatic restart every $interval minutes has been scheduled.${NC}"
+    if check_cron_exists; then
+        echo -e "\n ${GREEN}✓ Automatic restart schedule updated to every $interval minutes.${NC}"
+    else
+        echo -e "\n ${GREEN}✓ Automatic restart every $interval minutes has been scheduled.${NC}"
+    fi
 }
 
 # Function to remove cron job
 remove_cron() {
     show_header
     echo -e "       ${RED}══════ Remove Restart Schedule ════════${NC}"
-    temp_cron=$(mktemp)
-    crontab -l > "$temp_cron" 2>/dev/null
-    if grep -q "backhaul-cron" "$temp_cron"; then
-        sed -i '/backhaul-cron/d' "$temp_cron"
+    if check_cron_exists; then
+        current_interval=$(get_current_cron_interval)
+        temp_cron=$(mktemp)
+        crontab -l > "$temp_cron" 2>/dev/null
+        sed -i '/systemctl list-unit-files | grep "backhaul-"/d' "$temp_cron"
         crontab "$temp_cron"
-        echo -e "\n ${GREEN}✓ Automatic restart schedule has been removed.${NC}"
+        rm "$temp_cron"
+        echo -e "\n ${GREEN}✓ Automatic restart schedule (every $current_interval minutes) has been removed.${NC}"
     else
         echo -e "\n ${RED}No automatic restart schedule was found.${NC}"
     fi
-    rm "$temp_cron"
 }
 
 # Function to restart services now
@@ -100,9 +122,9 @@ restart_now() {
     show_header
     echo -e "       ${YELLOW}════════ Restart Services Now ═════════${NC}\n"
     if check_services; then
-        echo -e "${YELLOW}Restarting services...${NC}\n"
+        echo -e "   ${YELLOW}Restarting services...${NC}\n"
         systemctl restart $services
-        echo -e "${GREEN}✓ Services have been restarted.${NC}"
+        echo -e " ${GREEN}✓ Services have been restarted.${NC}"
     fi
 }
 
