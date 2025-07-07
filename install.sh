@@ -29,7 +29,6 @@ show_menu() {
     echo -e "5. Update script to latest version"
     echo -e "6. Exit"
     echo -n "Please enter your choice [1-6]: "
-    echo " "
 }
 
 # Function to update the script
